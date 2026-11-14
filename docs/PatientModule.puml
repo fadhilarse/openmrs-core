@@ -1,0 +1,74 @@
+@startuml
+skinparam classAttributeIconSize 0
+scale 0.9
+
+' --- HIERARKI MODEL ENTITAS & RELASI OOP ---
+abstract class BaseOpenmrsMetadata {
+    - name: String
+    - description: String
+    - retired: Boolean
+}
+
+class Location {
+    - locationId: Integer
+    - parentLocation: Location
+    - childLocations: Set<Location>
+    - attributes: Set<LocationAttribute>
+    + getLocationId(): Integer
+    + getParentLocation(): Location
+    + getChildLocations(): Set<Location>
+    + getAttributes(): Set<LocationAttribute>
+}
+
+class LocationAttribute {
+    - locationAttributeId: Integer
+    - location: Location
+    - valueReference: String
+}
+
+' 1. INHERITANCE (Pewarisan)
+BaseOpenmrsMetadata <|-- Location : <<inheritance>>
+
+' 2. AGGREGATION (Agregasi - Kepemilikan Longgar)
+Location "0..1" o-- "0..*" Location : <<aggregation>>\nparent / children
+
+' 3. COMPOSITION (Komposisi - Kepemilikan Kuat)
+Location "1" *-- "0..*" LocationAttribute : <<composition>>\nhas attributes
+
+' --- HIERARKI LAYER SERVICE & DAO ---
+abstract class BaseOpenmrsService
+
+interface LocationService {
+    + saveLocation(Location): Location
+    + getLocation(Integer): Location
+    + getAllLocations(): List<Location>
+}
+
+class LocationServiceImpl {
+    - dao: LocationDAO
+    + setLocationDAO(LocationDAO): void
+    + saveLocation(Location): Location
+    + getLocation(Integer): Location
+}
+
+interface LocationDAO {
+    + saveLocation(Location): Location
+    + getLocation(Integer): Location
+}
+
+class HibernateLocationDAO {
+    + saveLocation(Location): Location
+    + getLocation(Integer): Location
+}
+
+' Relasi Pewarisan & Implementasi
+BaseOpenmrsService <|-- LocationServiceImpl : <<inheritance>>
+LocationService <|.. LocationServiceImpl : implements
+LocationDAO <|.. HibernateLocationDAO : implements
+
+' Relasi Dependensi (Dependency Injection) & Pengelolaan Entitas
+LocationServiceImpl --> LocationDAO : uses
+LocationService ..> Location : manages
+LocationDAO ..> Location : persists
+
+@enduml
